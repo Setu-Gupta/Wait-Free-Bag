@@ -16,10 +16,10 @@ INCS += $(wildcard $(INC_DIR)/*.hpp)
 
 .PHONY: all
 all: CXXFLAGS += $(RELFLAGS)
-all: build
+all: format build
 .PHONY: nopt
 nopt: CXXFLAGS += $(NOPTFLAGS)
-nopt: build
+nopt: format build
 TST_TGTS = $(patsubst %.cpp,$(BIN_DIR)/%,$(notdir $(TST_SRCS)))
 build: $(TST_TGTS)
 $(BIN_DIR)/%: $(TST_DIR)/%.cpp $(INCS)
@@ -30,6 +30,7 @@ $(BIN_DIR)/%: $(TST_DIR)/%.cc $(INCS)
 DBG_TST_TGTS = $(patsubst %.cpp,$(DBG_BIN_DIR)/%,$(notdir $(TST_SRCS)))
 .PHONY: debug
 debug: CXXFLAGS += $(DBGFLAGS)
+debug: format 
 debug: $(DBG_TST_TGTS) 
 $(DBG_BIN_DIR)/%: $(TST_DIR)/%.cpp $(INCS)
 	$(CXX) -I $(INC_DIR) $(CXXFLAGS) $< -o $@
