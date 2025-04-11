@@ -21,7 +21,7 @@ all: format build
 nopt: CXXFLAGS += $(NOPTFLAGS)
 nopt: format build
 TST_TGTS = $(patsubst %.cpp,$(BIN_DIR)/%,$(notdir $(TST_SRCS)))
-build: $(TST_TGTS)
+build: $(TST_TGTS) $(INCS)
 $(BIN_DIR)/%: $(TST_DIR)/%.cpp $(INCS)
 	$(CXX) -I $(INC_DIR) $(CXXFLAGS) $< -o $@
 $(BIN_DIR)/%: $(TST_DIR)/%.cc $(INCS)
