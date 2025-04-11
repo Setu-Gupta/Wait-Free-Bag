@@ -15,6 +15,7 @@ namespace wait_free_bag
                 private:
                         struct node_t
                         {
+                                public:
                                         DataType              data;
                                         std::atomic_uintptr_t next;
                         };
@@ -40,14 +41,15 @@ namespace wait_free_bag
                 private:
                         struct WaitFreeBagImpl
                         {
-                                std::array<WaitFreeQueue<DataType>, ThreadCount> data;
+                                public:
+                                        std::array<WaitFreeQueue<DataType>, ThreadCount> data;
 
-                                // Ref: https://stackoverflow.com/questions/3069255/singleton-multi-threading
-                                static WaitFreeBagImpl& get_instance()
-                                {
-                                        static WaitFreeBagImpl obj;
-                                        return obj;
-                                }
+                                        // Ref: https://stackoverflow.com/questions/3069255/singleton-multi-threading
+                                        static WaitFreeBagImpl& get_instance()
+                                        {
+                                                static WaitFreeBagImpl obj;
+                                                return obj;
+                                        }
                         };
 
                         std::thread::id my_id;
