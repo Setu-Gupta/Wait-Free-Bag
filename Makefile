@@ -1,7 +1,7 @@
 CXX ?= g++
 CXXFLAGS = -std=c++23 -Wall -Wextra -Wconversion -Wpedantic -Wnrvo -Werror -fanalyzer -fopenmp -flto=auto -fvisibility=hidden
 RELFLAGS = -Ofast -march=native
-DBGFLAGS = -DDEBUG -Og -ggdb3 -fsanitize=undefined,leak,address
+DBGFLAGS = -DDEBUG -Og -ggdb3 -fsanitize=undefined,leak,address -Wno-analyzer-use-of-uninitialized-value
 NOPTFLAGS = -Og
 
 TST_DIR = ./test
