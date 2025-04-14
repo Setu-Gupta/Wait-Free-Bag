@@ -1,12 +1,8 @@
-// Ref: https://www.openmp.org/spec-html/5.1/openmpsu105.html
-
 #include <array>
 #include <atomic>
-#include <iostream>
 #include <omp.h>
 #include <optional>
 #include <stdexcept>
-#include <syncstream>
 #include <thread>
 
 namespace wait_free_bag
