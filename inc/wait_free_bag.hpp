@@ -2,9 +2,11 @@
 
 #include <array>
 #include <atomic>
+#include <iostream>
 #include <omp.h>
 #include <optional>
 #include <stdexcept>
+#include <syncstream>
 #include <thread>
 
 namespace wait_free_bag
@@ -87,8 +89,8 @@ namespace wait_free_bag
                                 node_t* head_copy = nullptr;
                                 while(true)
                                 {
-                                        head_copy               = head;
-                                        const node_t* tail_copy = tail;
+                                        head_copy               = head.load();
+                                        const node_t* tail_copy = tail.load();
                                         const node_t* next      = head->next;
                                         if(head_copy == head)
                                         {
@@ -117,7 +119,7 @@ namespace wait_free_bag
                                         }
                                 }
 
-                                free(head_copy);
+                                delete head_copy;
                                 return value;
                         }
 
@@ -128,9 +130,30 @@ namespace wait_free_bag
                                 std::atomic<node_t*> iterator(head.load());
                                 while(iterator != tail)
                                 {
-                                        f(iterator.load()->next.load()->data);
-                                        iterator.store(iterator.load()->next);
+                                        const node_t* iterator_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(iterator.load()) & mask);
+                                        const node_t* raw_next_ptr = (iterator_ptr->next).load();
+                                        node_t*       next_ptr     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(raw_next_ptr) & mask);
+
+                                        f(next_ptr->data);
+                                        iterator.store(next_ptr);
                                 }
+                        }
+
+                        ~WaitFreeQueue()
+                        {
+                                std::atomic<node_t*> iterator(head.load());
+                                while(iterator != tail)
+                                {
+                                        const node_t* iterator_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(iterator.load()) & mask);
+                                        const node_t* raw_next_ptr = (iterator_ptr->next).load();
+                                        node_t*       next_ptr     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(raw_next_ptr) & mask);
+
+                                        delete iterator_ptr;
+                                        iterator.store(next_ptr);
+                                }
+
+                                const node_t* tail_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(tail.load()) & mask);
+                                delete tail_ptr;
                         }
         };
 
