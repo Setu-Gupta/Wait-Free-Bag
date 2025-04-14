@@ -47,14 +47,15 @@ namespace wait_free_bag
                                 node_t* tail_copy = nullptr;
                                 while(true)
                                 {
-                                        tail_copy    = tail.load();
-                                        node_t* next = (tail.load()->next).load();
+                                        tail_copy             = tail.load();
+                                        node_t* tail_copy_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(tail_copy) & mask);
+                                        node_t* next          = (tail_copy_ptr->next).load();
                                         if(tail.load() == tail_copy)
                                         {
                                                 if((reinterpret_cast<size_t>(next) & mask) == 0x0) // Add the new node
                                                 {
                                                         node_t* node_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(node) | 0x0001000000000000);
-                                                        if(std::atomic_compare_exchange_weak(&(tail.load()->next), &next, node_ptr)) break;
+                                                        if(std::atomic_compare_exchange_weak(&(tail_copy_ptr->next), &next, node_ptr)) break;
                                                 }
                                                 else // Move the tail forward
                                                 {
@@ -177,10 +178,15 @@ namespace wait_free_bag
 
                         std::optional<DataType> extract()
                         {
-                                static thread_local int idx     = omp_get_thread_num() % Spread;
-                                std::optional<DataType> element = data[idx].dequeue();
-                                idx                             = (idx + 1) % Spread;
+                                static thread_local int idx = omp_get_thread_num() % Spread;
 
+                                std::optional<DataType> element;
+                                for(int i = 0; i < Spread; i++)
+                                {
+                                        element = data[idx].dequeue();
+                                        idx     = (idx + 1) % Spread;
+                                        if(element) break;
+                                }
                                 if(element) std::atomic_fetch_sub(&num_elements, 1);
 
                                 return element;
@@ -196,10 +202,11 @@ namespace wait_free_bag
                         void for_all(Func f)
                         {
                                 #pragma omp barrier
-                                thread_local int idx = omp_get_thread_num();
+                                int idx = omp_get_thread_num();
 
                                 while(static_cast<size_t>(idx) < Spread)
                                 {
+                                        std::cout << "Index = " << idx << '\n';
                                         data[idx].for_all(f);
                                         idx = (idx + omp_get_num_threads());
                                 }
