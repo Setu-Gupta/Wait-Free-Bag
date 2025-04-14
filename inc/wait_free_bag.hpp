@@ -55,9 +55,8 @@ namespace wait_free_bag
                                         {
                                                 if((reinterpret_cast<size_t>(next) & mask) == 0x0) // Add the new node
                                                 {
-                                                        const node_t*              node_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(node) | 0x0001000000000000);
-                                                        const std::atomic<node_t*> atomic_node_ptr(const_cast<node_t*>(node_ptr));
-                                                        if(std::atomic_compare_exchange_weak(&(tail.load()->next), &next, atomic_node_ptr)) break;
+                                                        node_t* node_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(node) | 0x0001000000000000);
+                                                        if(std::atomic_compare_exchange_weak(&(tail.load()->next), &next, node_ptr)) break;
                                                 }
                                                 else // Move the tail forward
                                                 {
