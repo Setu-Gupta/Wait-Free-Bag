@@ -193,10 +193,13 @@ namespace wait_free_bag
                                 {
                                         element = data[idx].dequeue();
                                         idx     = (idx + 1) % Spread;
-                                        if(element) break;
+                                        if(element)
+                                        {
+                                                std::atomic_fetch_sub(&num_elements, 1);
+                                                break;
+                                        }
                                         if(this->size() == 0) break;
                                 }
-                                if(element) std::atomic_fetch_sub(&num_elements, 1);
 
                                 return element;
                         }
