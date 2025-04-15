@@ -31,6 +31,9 @@ namespace wait_free_bag
                         WaitFreeQueue()
                         {
                                 node_t* const node = new node_t();
+                                if((reinterpret_cast<size_t>(node) & mask) != reinterpret_cast<size_t>(node)) throw std::logic_error("Unexpected pointer value\n");
+                                if(node == nullptr) throw std::logic_error("Could not allocate queue\n");
+
                                 node->next.store(nullptr);
                                 head.store(node);
                                 tail.store(node);
