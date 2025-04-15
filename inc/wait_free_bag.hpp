@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 #include <atomic>
 #include <omp.h>
