@@ -30,7 +30,7 @@ namespace wait_free_bag
                 public:
                         WaitFreeQueue()
                         {
-                                node_t* node = new node_t();
+                                node_t* const node = new node_t();
                                 node->next.store(nullptr);
                                 head.store(node);
                                 tail.store(node);
@@ -39,7 +39,7 @@ namespace wait_free_bag
                         bool enqueue(DataType data)
                         {
                                 // Set up the new node
-                                node_t* node = new node_t();
+                                node_t* const node = new node_t();
                                 if(!node || ((reinterpret_cast<size_t>(node) & mask) != reinterpret_cast<size_t>(node))) return false;
                                 node->data = data;
                                 node->next.store(nullptr);
@@ -47,33 +47,33 @@ namespace wait_free_bag
                                 node_t* tail_copy = nullptr;
                                 while(true)
                                 {
-                                        tail_copy             = tail.load();
-                                        node_t* tail_copy_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(tail_copy) & mask);
-                                        node_t* next          = (tail_copy_ptr->next).load();
+                                        tail_copy                   = tail.load();
+                                        node_t* const tail_copy_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(tail_copy) & mask);
+                                        node_t*       next          = (tail_copy_ptr->next).load();
                                         if(tail.load() == tail_copy)
                                         {
                                                 if((reinterpret_cast<size_t>(next) & mask) == 0x0) // Add the new node
                                                 {
-                                                        node_t* node_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(node) | 0x0001000000000000);
+                                                        node_t* const node_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(node) | 0x0001000000000000);
                                                         if(std::atomic_compare_exchange_weak(&(tail_copy_ptr->next), &next, node_ptr)) break;
                                                 }
                                                 else // Move the tail forward
                                                 {
-                                                        size_t int_tail_copy = reinterpret_cast<size_t>(tail_copy);
-                                                        size_t count         = (int_tail_copy & mask) >> 48;
-                                                        count                = (count + 1) & 0x000000000000ffff;
-                                                        count                = (count << 48) & mask;
-                                                        node_t* new_tail     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(next) | count);
+                                                        const size_t int_tail_copy = reinterpret_cast<size_t>(tail_copy);
+                                                        size_t       count         = (int_tail_copy & mask) >> 48;
+                                                        count                      = (count + 1) & 0x000000000000ffff;
+                                                        count                      = (count << 48) & mask;
+                                                        node_t* const new_tail     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(next) | count);
                                                         std::atomic_compare_exchange_weak(&tail, &tail_copy, new_tail);
                                                 }
                                         }
                                 }
 
-                                size_t int_tail_copy = reinterpret_cast<size_t>(tail_copy);
-                                size_t count         = (int_tail_copy & mask) >> 48;
-                                count                = (count + 1) & 0x000000000000ffff;
-                                count                = (count << 48) & mask;
-                                node_t* new_tail     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(node) | count);
+                                const size_t int_tail_copy = reinterpret_cast<size_t>(tail_copy);
+                                size_t       count         = (int_tail_copy & mask) >> 48;
+                                count                      = (count + 1) & 0x000000000000ffff;
+                                count                      = (count << 48) & mask;
+                                node_t* const new_tail     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(node) | count);
                                 std::atomic_compare_exchange_weak(&tail, &tail_copy, new_tail);
 
                                 return true;
@@ -86,37 +86,41 @@ namespace wait_free_bag
                                 node_t* head_copy = nullptr;
                                 while(true)
                                 {
-                                        head_copy               = head.load();
-                                        const node_t* tail_copy = tail.load();
-                                        const node_t* next      = head->next;
-                                        if(head_copy == head)
+                                        head_copy                         = head.load();
+                                        const node_t* const head_copy_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(head_copy) & mask);
+                                        node_t*             tail_copy     = tail.load();
+                                        const node_t* const tail_copy_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(tail_copy) & mask);
+                                        const node_t* const next          = head_copy_ptr->next;
+                                        const node_t* const next_ptr      = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(next) & mask);
+                                        if(head_copy == head.load())
                                         {
                                                 // Check if the queue is empty or if the tail is lagging behind
-                                                if((head & mask) == (tail & mask))
+                                                if(head_copy_ptr == tail_copy_ptr)
                                                 {
-                                                        if((next & mask) == nullptr) // Queue is empty
+                                                        if((reinterpret_cast<size_t>(next) & mask) == 0x0) // Queue is empty
                                                                 return {};
 
                                                         // Advance the tail
-                                                        size_t count           = (tail & mask) >> 48;
+                                                        size_t count           = (reinterpret_cast<size_t>(tail_copy_ptr) & mask) >> 48;
                                                         count                  = (count + 1) & 0x000000000000ffff;
                                                         count                  = (count << 48) & mask;
-                                                        const node_t* new_tail = next | count;
+                                                        node_t* const new_tail = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(next) | count);
                                                         std::atomic_compare_exchange_weak(&tail, &tail_copy, new_tail);
                                                 }
 
-                                                value = next->data;
+                                                value = next_ptr->data;
 
                                                 // Advance the head
-                                                size_t count           = (head & mask) >> 48;
+                                                size_t count           = (reinterpret_cast<size_t>(head_copy_ptr) & mask) >> 48;
                                                 count                  = (count + 1) & 0x000000000000ffff;
                                                 count                  = (count << 48) & mask;
-                                                const node_t* new_head = next | count;
+                                                node_t* const new_head = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(next) | count);
                                                 if(std::atomic_compare_exchange_weak(&head, &head_copy, new_head)) break;
                                         }
                                 }
 
-                                delete head_copy;
+                                const node_t* const head_copy_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(head_copy) & mask);
+                                delete head_copy_ptr;
                                 return value;
                         }
 
@@ -124,15 +128,17 @@ namespace wait_free_bag
                                 requires invokable<Func, DataType>
                         void for_all(Func f)
                         {
+                                const node_t* const  tail_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(tail.load()) & mask);
                                 std::atomic<node_t*> iterator(head.load());
-                                while(iterator != tail)
+                                const node_t*        iterator_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(iterator.load()) & mask);
+                                while(iterator_ptr != tail_ptr)
                                 {
-                                        const node_t* iterator_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(iterator.load()) & mask);
-                                        const node_t* raw_next_ptr = (iterator_ptr->next).load();
-                                        node_t*       next_ptr     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(raw_next_ptr) & mask);
+                                        const node_t* const raw_next_ptr = (iterator_ptr->next).load();
+                                        node_t* const       next_ptr     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(raw_next_ptr) & mask);
 
                                         f(next_ptr->data);
                                         iterator.store(next_ptr);
+                                        iterator_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(iterator.load()) & mask);
                                 }
                         }
 
@@ -141,15 +147,15 @@ namespace wait_free_bag
                                 std::atomic<node_t*> iterator(head.load());
                                 while(iterator != tail)
                                 {
-                                        const node_t* iterator_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(iterator.load()) & mask);
-                                        const node_t* raw_next_ptr = (iterator_ptr->next).load();
-                                        node_t*       next_ptr     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(raw_next_ptr) & mask);
+                                        const node_t* const iterator_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(iterator.load()) & mask);
+                                        const node_t* const raw_next_ptr = (iterator_ptr->next).load();
+                                        node_t* const       next_ptr     = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(raw_next_ptr) & mask);
 
                                         delete iterator_ptr;
                                         iterator.store(next_ptr);
                                 }
 
-                                const node_t* tail_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(tail.load()) & mask);
+                                const node_t* const tail_ptr = reinterpret_cast<node_t*>(reinterpret_cast<size_t>(tail.load()) & mask);
                                 delete tail_ptr;
                         }
         };
@@ -164,9 +170,9 @@ namespace wait_free_bag
                 public:
                         void insert(DataType element)
                         {
-                                static thread_local int idx     = omp_get_thread_num() % Spread;
-                                bool                    success = data[idx].enqueue(element);
-                                idx                             = (idx + 1) % Spread;
+                                thread_local int idx     = omp_get_thread_num() % Spread;
+                                bool             success = data[idx].enqueue(element);
+                                idx                      = (idx + 1) % Spread;
 
                                 std::atomic_fetch_add(&num_elements, 1);
 
@@ -178,10 +184,10 @@ namespace wait_free_bag
 
                         std::optional<DataType> extract()
                         {
-                                static thread_local int idx = omp_get_thread_num() % Spread;
+                                thread_local int idx = omp_get_thread_num() % Spread;
 
                                 std::optional<DataType> element;
-                                for(int i = 0; i < Spread; i++)
+                                for(int i = 0; static_cast<size_t>(i) < Spread; i++)
                                 {
                                         element = data[idx].dequeue();
                                         idx     = (idx + 1) % Spread;
@@ -206,7 +212,6 @@ namespace wait_free_bag
 
                                 while(static_cast<size_t>(idx) < Spread)
                                 {
-                                        std::cout << "Index = " << idx << '\n';
                                         data[idx].for_all(f);
                                         idx = (idx + omp_get_num_threads());
                                 }
