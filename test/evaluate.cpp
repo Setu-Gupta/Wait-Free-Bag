@@ -96,7 +96,15 @@ int main()
         const std::chrono::duration<double> lock_based_extract_time = tp5 - tp4;
         const std::chrono::duration<double> wait_free_extract_time  = tp6 - tp5;
 
-        std::println("{},{},{},{},{},{},{},{},{}",
+        int num_threads = -1;
+        #pragma omp parallel
+        {
+                #pragma omp master
+                num_threads = omp_get_num_threads();
+        }
+
+        std::println("{},{},{},{},{},{},{},{},{},{}",
+                     num_threads,
                      lock_based_insert_time,
                      wait_free_insert_time,
                      lock_based_for_all_time,
