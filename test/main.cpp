@@ -13,9 +13,18 @@ void insert_test(auto& bag)
         }
 }
 
-void extract_test([[maybe_unused]] auto& bag)
+void extract_test(auto& bag)
 {
-        // TODO
+        #pragma omp parallel for
+        for(int i = 0; i < 16; i++)
+        {
+                int extract_count = 0;
+                for(int j = 0; j < 32; j++)
+                {
+                        if(bag.extract()) extract_count++;
+                }
+                std::osyncstream(std::cout) << "Count " << extract_count << '\n';
+        }
 }
 
 void for_all_test(auto& bag)
@@ -27,9 +36,9 @@ void for_all_test(auto& bag)
         bag.for_all(printer);
 }
 
-void size_test([[maybe_unused]] auto& bag)
+void size_test(auto& bag)
 {
-        // TODO
+        std::cout << bag.size() << '\n';
 }
 
 int main()
