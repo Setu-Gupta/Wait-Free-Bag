@@ -36,7 +36,7 @@ void for_all_test(auto& bag)
         bag.for_all(printer);
 }
 
-void size_test(auto& bag)
+void size_test(const auto& bag)
 {
         std::cout << bag.size() << '\n';
 }

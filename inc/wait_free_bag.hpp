@@ -36,12 +36,12 @@ namespace wait_free_bag
                                 tail.store(node);
                         }
 
-                        bool enqueue(DataType data)
+                        bool enqueue(const DataType& data)
                         {
                                 // Set up the new node
                                 node_t* const node = new node_t();
                                 if(!node || ((reinterpret_cast<size_t>(node) & mask) != reinterpret_cast<size_t>(node))) return false;
-                                node->data = data;
+                                node->data = std::move(data);
                                 node->next.store(nullptr);
 
                                 node_t* tail_copy = nullptr;
@@ -108,7 +108,7 @@ namespace wait_free_bag
                                                         std::atomic_compare_exchange_weak(&tail, &tail_copy, new_tail);
                                                 }
 
-                                                value = next_ptr->data;
+                                                value = std::move(next_ptr->data);
 
                                                 // Advance the head
                                                 size_t count           = (reinterpret_cast<size_t>(head_copy_ptr) & mask) >> 48;
