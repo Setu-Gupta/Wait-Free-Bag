@@ -45,6 +45,8 @@ void wait_free_for_all(auto& bag)
         {
                 value = value * -1;
         };
+
+        #pragma omp parallel
         bag.for_all(foo);
 }
 

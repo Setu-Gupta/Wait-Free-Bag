@@ -33,6 +33,8 @@ void for_all_test(auto& bag)
         {
                 std::osyncstream(std::cout) << "Value = " << value << '\n';
         };
+
+        #pragma omp parallel
         bag.for_all(printer);
 }
 
