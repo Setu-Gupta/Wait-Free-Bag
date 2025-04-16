@@ -6,25 +6,28 @@
 #include <vector>
 #include <wait_free_bag.hpp>
 
+const int THREADS             = 16;
+const int ELEMENTS_PER_THREAD = 65536 * 32;
+
 void lock_based_insert(auto& vec)
 {
-        #pragma omp parallel for
-        for(int i = 0; i < 1024; i++)
+	#pragma omp parallel for
+        for(int i = 0; i < THREADS; i++)
         {
-                for(int j = 0; j < 1024; j++)
+                for(int j = 0; j < ELEMENTS_PER_THREAD; j++)
                 {
-                        #pragma omp critical
-                        vec.push_back((i * 1024) + j);
+	                #pragma omp critical
+                        vec.push_back((i * ELEMENTS_PER_THREAD) + j);
                 }
         }
 }
 
 void wait_free_insert(auto& bag)
 {
-        #pragma omp parallel for
-        for(int i = 0; i < 1024; i++)
+	#pragma omp parallel for
+        for(int i = 0; i < THREADS; i++)
         {
-                for(int j = 0; j < 1024; j++) bag.insert((i * 1024) + j);
+                for(int j = 0; j < ELEMENTS_PER_THREAD; j++) bag.insert((i * ELEMENTS_PER_THREAD) + j);
         }
 }
 
@@ -35,7 +38,7 @@ void lock_based_for_all(auto& vec)
                 value = value * -1;
         };
 
-        #pragma omp parallel for
+	#pragma omp parallel for
         for(int& e: vec) foo(e);
 }
 
@@ -46,18 +49,18 @@ void wait_free_for_all(auto& bag)
                 value = value * -1;
         };
 
-        #pragma omp parallel
+	#pragma omp parallel
         bag.for_all(foo);
 }
 
 void lock_based_extract(auto& vec)
 {
-        #pragma omp parallel for
-        for(std::size_t i = 0; i < vec.size(); i++)
+	#pragma omp parallel for
+        for(int i = 0; static_cast<decltype(vec.size())>(i) < vec.size(); i++)
         {
                 while(vec.size() > 0)
                 {
-                        #pragma omp critical
+	                #pragma omp critical
                         if(vec.size() > 0) vec.pop_back();
                 }
         }
@@ -65,8 +68,8 @@ void lock_based_extract(auto& vec)
 
 void wait_free_extract(auto& bag)
 {
-        #pragma omp parallel for
-        for(int i = 0; i < 1024; i++)
+	#pragma omp parallel for
+        for(int i = 0; i < THREADS; i++)
         {
                 while(bag.size() > 0) bag.extract();
         }
@@ -74,8 +77,8 @@ void wait_free_extract(auto& bag)
 
 int main()
 {
-        wait_free_bag::WaitFreeBag<int, 1024> bag;
-        std::vector<int>                      vec;
+        wait_free_bag::WaitFreeBag<int, THREADS> bag;
+        std::vector<int>                         vec;
 
         const auto tp0 = std::chrono::high_resolution_clock::now();
         lock_based_insert(vec);
@@ -99,9 +102,9 @@ int main()
         const std::chrono::duration<double> wait_free_extract_time  = tp6 - tp5;
 
         int num_threads = -1;
-        #pragma omp parallel
+	#pragma omp parallel
         {
-                #pragma omp master
+	        #pragma omp master
                 num_threads = omp_get_num_threads();
         }
 
