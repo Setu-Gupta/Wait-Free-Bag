@@ -1,8 +1,6 @@
 #include <chrono>
-#include <iostream>
 #include <omp.h>
 #include <print>
-#include <thread>
 #include <vector>
 #include <wait_free_bag.hpp>
 
