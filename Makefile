@@ -1,5 +1,5 @@
 CXX ?= g++
-CXXFLAGS = -std=c++23 -Wall -Wextra -Wconversion -Wpedantic -Wnrvo -Werror -fanalyzer -fopenmp -flto=auto -fvisibility=hidden
+CXXFLAGS = -std=c++23 -Wall -Wextra -Wconversion -Wpedantic -Wnrvo -Werror -fanalyzer -fopenmp -flto=auto -fvisibility=hidden -pipe
 RELFLAGS = -Ofast -march=native -Wno-analyzer-malloc-leak
 DBGFLAGS = -DDEBUG -Og -ggdb3 -fsanitize=undefined,leak,address -Wno-analyzer-use-of-uninitialized-value
 NOPTFLAGS = -Og
