@@ -1,15 +1,15 @@
 #include <omp.h>
 #include <wait_free_bag.hpp>
 
-const int THREADS             = 16;
-const int ELEMENTS_PER_THREAD = 65536 * 32;
+const std::size_t THREADS             = 16;
+const std::size_t ELEMENTS_PER_THREAD = (1UZ << 60);
 
 void wait_free_insert(auto& bag)
 {
 #pragma omp parallel for
-        for(int i = 0; i < THREADS; i++)
+        for(std::size_t i = 0; i < THREADS; i++)
         {
-                for(int j = 0; j < ELEMENTS_PER_THREAD; j++) bag.insert((i * ELEMENTS_PER_THREAD) + j);
+                for(std::size_t j = 0; j < ELEMENTS_PER_THREAD; j++) bag.insert(static_cast<int>((i * ELEMENTS_PER_THREAD) + j));
         }
 }
 
@@ -27,7 +27,7 @@ void wait_free_for_all(auto& bag)
 void wait_free_extract(auto& bag)
 {
 #pragma omp parallel for
-        for(int i = 0; i < THREADS; i++)
+        for(std::size_t i = 0; i < THREADS; i++)
         {
                 while(bag.size() > 0) bag.extract();
         }
