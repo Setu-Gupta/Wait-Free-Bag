@@ -7,6 +7,11 @@ if [ -f $file ]
 then
         rm $file
 fi
+raw_file="weak_raw.csv"
+if [ -f ${raw_file} ]
+then
+        rm ${raw_file}
+fi
 echo "P,N,Insertion Speedup, Iteration Speedup, Extraction Speedup" >> $file
 for i in $(seq 1 16)
 do
@@ -20,6 +25,7 @@ do
         echo $cmd
         $cmd > tmp
         export OMP_NUM_THREADS=$backup;
+        cat tmp >> ${raw_file}
         insert_speedup=$(cat tmp | cut -d, -f10)
         iteration_speedup=$(cat tmp | cut -d, -f11)
         extraction_speedup=$(cat tmp | cut -d, -f12)
@@ -35,6 +41,11 @@ if [ -f $file ]
 then
         rm $file
 fi
+raw_file="strong_raw.csv"
+if [ -f ${raw_file} ]
+then
+        rm ${raw_file}
+fi
 echo "P,N,Insertion Speedup, Iteration Speedup, Extraction Speedup" >> $file
 for i in $(seq 1 16)
 do
@@ -47,6 +58,7 @@ do
         echo $cmd
         $cmd > tmp
         export OMP_NUM_THREADS=$backup;
+        cat tmp >> ${raw_file}
         insert_speedup=$(cat tmp | cut -d, -f10)
         iteration_speedup=$(cat tmp | cut -d, -f11)
         extraction_speedup=$(cat tmp | cut -d, -f12)
